@@ -10,6 +10,7 @@
 - [ ]  카테고리 자동 분류
 - [ ]  CSV 변환
 - [x]  가상환경 set import
+- [x]  필요 lib 설치 (beautifulsoup4 pandas scikit-learn joblib)
 
 ```markdown
 # basic structure
