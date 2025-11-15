@@ -9,6 +9,7 @@
 - [ ]  객체화된 메시지 파싱
 - [ ]  카테고리 자동 분류
 - [ ]  CSV 변환
+- [x]  가상환경 set import
 
 ```markdown
 # basic structure
