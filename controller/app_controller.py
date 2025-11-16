@@ -26,5 +26,8 @@ class AppController:
 
                 self.view.show_message("CSV 파일 저장 완료!")
 
-            # elif choice == "0":
+            elif choice == "0":
+                self.view.show_message("종료합니다!")
 
+            else:
+                self.view.show_error("잘못된 입력입니다!")
