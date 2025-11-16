@@ -14,6 +14,11 @@
 - [ ]  CLI 기반 앱 구동
 - [x]  MVC 패턴 반영
 
+### 2. I/O
+- [ ]  웰컴메시지 출력
+- [ ]  동작 선택 메시지 출력
+- [ ]  에러 출력 메시지
+
 ```markdown
 # basic structure
 <type>(<scope>): <subject>
