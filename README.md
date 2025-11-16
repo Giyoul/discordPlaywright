@@ -11,6 +11,8 @@
 - [ ]  CSV 변환
 - [x]  가상환경 set import
 - [x]  필요 lib 설치 (beautifulsoup4 pandas scikit-learn joblib)
+- [ ]  CLI 기반 앱 구동
+- [x]  MVC 패턴 반영
 
 ```markdown
 # basic structure
@@ -35,3 +37,6 @@ domain - 핵심 로직
 validation - 유효성검사
 test - 테스트코드 추가
 ```
+
+### 2. 네이밍 규칙
+파일명 - snake case
