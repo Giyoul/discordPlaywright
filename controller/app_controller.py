@@ -28,6 +28,7 @@ class AppController:
 
             elif choice == "0":
                 self.view.show_message("종료합니다!")
+                break
 
             else:
                 self.view.show_error("잘못된 입력입니다!")
