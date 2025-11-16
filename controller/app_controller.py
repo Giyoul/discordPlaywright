@@ -10,8 +10,6 @@ class AppController:
 
     def run(self):
         self.view.show_welcome()
-        # 자동 로그인 기능 제거 - 사용자가 직접 로그인하도록 변경
-        # self.certificate()
 
         while True:
             choice = self.view.prompt_main_menu()

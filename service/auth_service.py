@@ -22,10 +22,5 @@ class AuthService:
         
         if self.cookie_dict is None:
             self.cookie_dict = {}
-        
-        # print(f"[DEBUG] 로드된 쿠키 개수: {len(self.cookie_dict)}")
-        # if self.cookie_dict:
-        #     print(f"[DEBUG] 쿠키 키 샘플: {list(self.cookie_dict.keys())[:5]}")
-        # else:
-        #     print("[DEBUG] 쿠키가 비어있습니다!")
+
         return self.cookie_dict

@@ -27,22 +27,6 @@ class ScraperService:
                 print("페이지 로딩 중...")
                 page.goto(url, wait_until='networkidle', timeout=30000)
                 
-                # 로그인 페이지인지 확인
-                current_url = page.url
-                if 'login' in current_url.lower() or 'auth' in current_url.lower():
-                    print("\n[INFO] 로그인 페이지가 감지되었습니다.")
-                    print("[INFO] 브라우저에서 직접 로그인해주세요.")
-                    print("[INFO] 로그인 완료 후 채널 페이지가 로드될 때까지 기다립니다...")
-                    print("[INFO] (로그인 완료 후 Enter 키를 눌러주세요)")
-                    
-                    # 사용자가 로그인을 완료할 때까지 대기
-                    input("\n로그인을 완료하신 후 Enter 키를 눌러주세요: ")
-                    
-                    # 채널 URL로 이동 (로그인 후 리다이렉트되었을 수 있음)
-                    if url not in page.url:
-                        print(f"\n[INFO] 채널 페이지로 이동 중...")
-                        page.goto(url, wait_until='networkidle', timeout=30000)
-                
                 # 채널 페이지가 완전히 로드되고 메시지가 나타날 때까지 대기
                 print("\n[INFO] 채널 페이지 및 메시지 로딩 대기 중...")
                 try:
