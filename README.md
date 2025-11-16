@@ -16,7 +16,8 @@
 - [x]  스크래핑이 끝나면 자동으로 글 목록으로 이동하도록
 - [x]  스크롤된 메시지 객체화
 - [x]  객체화된 메시지 파싱
-- [ ]  카테고리 자동 분류
+- [x]  카테고리 자동 분류
+- [x]  gemini 환경설정
 - [ ]  CSV 변환
 - [x]  가상환경 set import
 - [x]  필요 lib 설치 (beautifulsoup4 pandas scikit-learn joblib)

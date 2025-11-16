@@ -1,4 +1,5 @@
 requests
 beautifulsoup4
 browser-cookie3
-
+playwright
+google-generativeai
