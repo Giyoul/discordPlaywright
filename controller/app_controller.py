@@ -17,10 +17,23 @@ class AppController:
             choice = self.view.prompt_main_menu()
 
             if choice == "1":
+                # 자동 분류 모드
+                self.scraper.set_auto_classify(True)
                 data = self.scraper.scrape()
                 self.view.show_message("스크래핑 완료!")
 
             elif choice == "2":
+                # 배치 분류 모드 (분류하지 않고 원본만 저장)
+                self.scraper.set_auto_classify(False)
+                data = self.scraper.scrape()
+                self.view.show_message("스크래핑 완료! (원본 데이터 저장됨)")
+
+            elif choice == "3":
+                # 배치 분류 실행
+                self.scraper.batch_classify()
+                self.view.show_message("배치 분류 완료!")
+
+            elif choice == "4":
                 self.save_service.save_to_csv()
 
             elif choice == "0":

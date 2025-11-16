@@ -5,10 +5,12 @@ from service.classification_service import ClassificationService
 
 class ScraperService:
     def __init__(self):
-        self.cached_posts = []
+        self.cached_posts = []  # 분류된 posts
+        self.raw_scraped_data = []  # 분류되지 않은 원본 데이터
         self.scraped_urls = set()  # 이미 스크래핑한 URL 추적
         self.should_stop = False  # 종료 플래그
         self.classifier = ClassificationService()  # 분류 서비스 초기화
+        self.auto_classify = False  # 스크래핑 시 자동 분류 여부
 
     def scrape(self):
         url = config.CHANNEL_URL
@@ -63,22 +65,28 @@ class ScraperService:
                                 print(f"\n[INFO] 새로운 스레드 감지: {current_url}")
                                 thread_data = self._scrape_thread(page, current_url)
                                 if thread_data:
-                                    # AI 분류 수행
-                                    classified_post = self._classify_thread(thread_data)
-                                    if classified_post:
-                                        # post_id가 null인 경우 알림
-                                        if classified_post.get('post_id') is None:
-                                            self._print_unclassified_notification(classified_post)
-                                        
-                                        self.cached_posts.append(classified_post)
-                                        self.scraped_urls.add(current_url)
-                                        print(f"[INFO] 스크래핑 및 분류 완료! (총 {len(self.cached_posts)}개)")
-                                        # 분류된 결과 출력
-                                        self._print_classified_post(classified_post)
+                                    if self.auto_classify:
+                                        # 자동 분류 모드: 즉시 분류
+                                        classified_post = self._classify_thread(thread_data)
+                                        if classified_post:
+                                            # post_id가 null인 경우 알림
+                                            if classified_post.get('post_id') is None:
+                                                self._print_unclassified_notification(classified_post)
+                                            
+                                            self.cached_posts.append(classified_post)
+                                            self.scraped_urls.add(current_url)
+                                            print(f"[INFO] 스크래핑 및 분류 완료! (총 {len(self.cached_posts)}개)")
+                                            # 분류된 결과 출력
+                                            self._print_classified_post(classified_post)
+                                        else:
+                                            print("[WARNING] 분류 실패, 원본 데이터만 저장")
+                                            self.raw_scraped_data.append(thread_data)
+                                            self.scraped_urls.add(current_url)
                                     else:
-                                        print("[WARNING] 분류 실패, 스크래핑 데이터만 저장")
-                                        self.cached_posts.append(thread_data)
+                                        # 배치 분류 모드: 원본 데이터만 저장
+                                        self.raw_scraped_data.append(thread_data)
                                         self.scraped_urls.add(current_url)
+                                        print(f"[INFO] 스크래핑 완료! (원본 데이터 저장, 총 {len(self.raw_scraped_data)}개)")
                             else:
                                 print(f"\n[INFO] 이미 스크래핑한 글입니다: {current_url}")
                             
@@ -92,8 +100,7 @@ class ScraperService:
                         page.wait_for_timeout(1000)
                 
                 browser.close()
-                print(f"\n[INFO] 스크래핑 종료. 총 {len(self.cached_posts)}개의 스레드를 스크래핑했습니다.")
-                
+
                 return self.cached_posts
                 
         except Exception as e:
@@ -103,8 +110,51 @@ class ScraperService:
             return []
     
     def get_cached_posts(self):
-        """스크래핑된 posts를 반환합니다."""
+        """분류된 posts를 반환합니다."""
         return self.cached_posts
+    
+    def get_raw_scraped_data(self):
+        """분류되지 않은 원본 데이터를 반환합니다."""
+        return self.raw_scraped_data
+    
+    def set_auto_classify(self, auto_classify):
+        """자동 분류 모드 설정"""
+        self.auto_classify = auto_classify
+    
+    def batch_classify(self):
+        """분류되지 않은 모든 데이터를 배치로 분류합니다."""
+        if not self.raw_scraped_data:
+            print("[INFO] 분류할 데이터가 없습니다.")
+            return
+        
+        print(f"\n[INFO] 배치 분류 시작... (총 {len(self.raw_scraped_data)}개)")
+        
+        classified_count = 0
+        failed_count = 0
+        
+        for idx, thread_data in enumerate(self.raw_scraped_data, 1):
+            print(f"\n[{idx}/{len(self.raw_scraped_data)}] 분류 중...")
+            classified_post = self._classify_thread(thread_data)
+            
+            if classified_post:
+                # post_id가 null인 경우 알림
+                if classified_post.get('post_id') is None:
+                    self._print_unclassified_notification(classified_post)
+                
+                self.cached_posts.append(classified_post)
+                classified_count += 1
+                print(f"[INFO] 분류 완료! (Post ID: {classified_post.get('post_id', 'null')})")
+            else:
+                failed_count += 1
+                print(f"[WARNING] 분류 실패")
+        
+        # 분류 완료된 데이터는 원본 리스트에서 제거
+        self.raw_scraped_data = []
+        
+        print(f"\n[INFO] 배치 분류 완료!")
+        print(f"  - 성공: {classified_count}개")
+        print(f"  - 실패: {failed_count}개")
+        print(f"  - 총 분류된 posts: {len(self.cached_posts)}개")
 
     # CLI에서 end 입력 기다림
     def _wait_for_end_command(self):
