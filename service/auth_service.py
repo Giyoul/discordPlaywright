@@ -7,9 +7,7 @@ class AuthService:
     def load_browser_cookies(self):
         try:
             print("브라우저 쿠키 불러오는 중...")
-            # browser_cookie3.chrome()은 쿠키 제너레이터를 반환합니다
             cookies = browser_cookie3.chrome(domain_name="discord.com")
-            # 제너레이터를 딕셔너리로 변환하여 저장
             self.cookie_dict = {}
             for cookie in cookies:
                 self.cookie_dict[cookie.name] = cookie.value
