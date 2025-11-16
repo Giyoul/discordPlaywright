@@ -19,11 +19,6 @@ class AppController:
                 self.view.show_message("스크래핑 완료!")
 
             elif choice == "2":
-                # 카테고리 분류 기능 구현
-
-                self.view.show_message("카테고리 분류 완료!")
-
-            elif choice == "3":
                 # CSV 파일로 저장 기능 구현
 
                 self.view.show_message("CSV 파일 저장 완료!")
@@ -34,6 +29,3 @@ class AppController:
 
             else:
                 self.view.show_error("잘못된 입력입니다!")
-
-    # def
-    # 여기 반복문 객체화

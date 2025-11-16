@@ -18,6 +18,7 @@
 - [x]  객체화된 메시지 파싱
 - [x]  카테고리 자동 분류
 - [x]  gemini 환경설정
+- [x]  ai 프롬프트
 - [ ]  CSV 변환
 - [x]  가상환경 set import
 - [x]  필요 lib 설치 (beautifulsoup4 pandas scikit-learn joblib)

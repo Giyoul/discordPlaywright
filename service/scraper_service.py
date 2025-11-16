@@ -1,12 +1,14 @@
 import config
 import threading
 from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeoutError
+from service.classification_service import ClassificationService
 
 class ScraperService:
     def __init__(self):
         self.cached_posts = []
         self.scraped_urls = set()  # 이미 스크래핑한 URL 추적
         self.should_stop = False  # 종료 플래그
+        self.classifier = ClassificationService()  # 분류 서비스 초기화
 
     def scrape(self):
         url = config.CHANNEL_URL
@@ -61,11 +63,22 @@ class ScraperService:
                                 print(f"\n[INFO] 새로운 스레드 감지: {current_url}")
                                 thread_data = self._scrape_thread(page, current_url)
                                 if thread_data:
-                                    self.cached_posts.append(thread_data)
-                                    self.scraped_urls.add(current_url)
-                                    print(f"[INFO] 스크래핑 완료! (총 {len(self.cached_posts)}개)")
-                                    # 스크래핑 결과 출력
-                                    self._print_thread_data(thread_data)
+                                    # AI 분류 수행
+                                    classified_post = self._classify_thread(thread_data)
+                                    if classified_post:
+                                        # post_id가 null인 경우 알림
+                                        if classified_post.get('post_id') is None:
+                                            self._print_unclassified_notification(classified_post)
+                                        
+                                        self.cached_posts.append(classified_post)
+                                        self.scraped_urls.add(current_url)
+                                        print(f"[INFO] 스크래핑 및 분류 완료! (총 {len(self.cached_posts)}개)")
+                                        # 분류된 결과 출력
+                                        self._print_classified_post(classified_post)
+                                    else:
+                                        print("[WARNING] 분류 실패, 스크래핑 데이터만 저장")
+                                        self.cached_posts.append(thread_data)
+                                        self.scraped_urls.add(current_url)
                             else:
                                 print(f"\n[INFO] 이미 스크래핑한 글입니다: {current_url}")
                             
@@ -224,9 +237,16 @@ class ScraperService:
             
             print(f"[INFO] 댓글 {len(comments)}개 추출 완료")
             
+            # title 추출 시도 (원본 글의 첫 부분을 title로 사용)
+            title = original_content[:50] if len(original_content) > 50 else original_content
+            if not title.strip():
+                title = "제목 없음"
+            
             return {
+                'title': title,
                 'thread_link': thread_url,
                 'full_view_link': full_view_url,
+                'author': original_author,
                 'original_post': {
                     'content': original_content,
                     'author': original_author,
@@ -240,9 +260,9 @@ class ScraperService:
             import traceback
             traceback.print_exc()
             return None
-    
+
+    # 내용 추출
     def _extract_message_content(self, msg_element):
-        """메시지 요소에서 내용을 추출합니다."""
         try:
             # 더 구체적인 선택자들 시도
             content_selectors = [
@@ -271,9 +291,9 @@ class ScraperService:
             return full_text
         except Exception:
             return ""
-    
+
+    # 사용자 추출
     def _extract_author(self, msg_element):
-        """메시지 요소에서 작성자를 추출합니다."""
         try:
             author_elem = msg_element.query_selector('[class*="username"], [class*="author"], [class*="name"]')
             if author_elem:
@@ -282,48 +302,57 @@ class ScraperService:
         except Exception:
             return "Unknown"
 
-    # CLI에 스크랩된 데이터 출력
-    def _print_thread_data(self, thread_data):
+    def _classify_thread(self, thread_data):
+        """스크래핑된 스레드 데이터를 AI로 분류합니다."""
+        try:
+            classified_post = self.classifier.classify(thread_data)
+            return classified_post
+        except Exception as e:
+            print(f"[ERROR] 분류 중 오류: {e}")
+            return None
+    
+    def _print_classified_post(self, classified_post):
+        """분류된 Post 객체를 출력합니다."""
         print("\n" + "="*80)
-        print("스크래핑 결과")
+        print("분류 결과")
         print("="*80)
         
-        print(f"\n[스레드 링크] {thread_data.get('thread_link', 'N/A')}")
-        if 'full_view_link' in thread_data:
-            print(f"[전체보기 링크] {thread_data.get('full_view_link', 'N/A')}")
+        print(f"\n[제목] {classified_post.get('title', 'N/A')}")
+        print(f"[설명] {classified_post.get('description', 'N/A')}")
+        print(f"[링크] {classified_post.get('link', 'N/A')}")
+        print(f"[작성자] {classified_post.get('author', 'N/A')}")
         
-        # 원본 글
-        original = thread_data.get('original_post', {})
-        print(f"\n[원본 글]")
-        print(f"  작성자: {original.get('author', 'Unknown')}")
-        print(f"  내용:")
-        content = original.get('content', '')
-        if content:
-            for line in content.split('\n')[:10]:
-                print(f"    {line}")
-            if len(content.split('\n')) > 10:
-                print(f"    ... (총 {len(content.split('\n'))}줄)")
+        post_id = classified_post.get('post_id')
+        if post_id:
+            post_title = self.classifier.get_post_title(post_id)
+            print(f"[Post ID] {post_id} - {post_title}")
         else:
-            print(f"    (내용 없음)")
+            print(f"[Post ID] null (적합한 카테고리 없음)")
+            # 새로운 post 제안이 있으면 출력
+            new_title = classified_post.get('new_post_title')
+            new_desc = classified_post.get('new_post_description')
+            if new_title or new_desc:
+                print(f"\n[새로운 Post 제안]")
+                if new_title:
+                    print(f"  제목: {new_title}")
+                if new_desc:
+                    print(f"  설명: {new_desc}")
         
-        # 댓글들
-        comments = thread_data.get('comments', [])
-        comment_count = thread_data.get('comment_count', 0)
-        print(f"\n[댓글] 총 {comment_count}개")
+        print("="*80 + "\n")
+    
+    def _print_unclassified_notification(self, classified_post):
+        """post_id가 null인 경우 알림을 출력합니다."""
+        print("\n" + "="*80)
+        print("[알림] 적합한 카테고리가 없는 글 발견!")
+        print("="*80)
+        print(f"링크: {classified_post.get('link', 'N/A')}")
         
-        for i, comment in enumerate(comments[:5], 1):
-            print(f"\n  댓글 #{i}:")
-            print(f"    작성자: {comment.get('author', 'Unknown')}")
-            comment_content = comment.get('content', '')
-            if comment_content:
-                for line in comment_content.split('\n')[:3]:
-                    print(f"    {line}")
-                if len(comment_content.split('\n')) > 3:
-                    print(f"    ...")
-            else:
-                print(f"    (내용 없음)")
+        new_title = classified_post.get('new_post_title')
+        new_desc = classified_post.get('new_post_description')
         
-        if comment_count > 5:
-            print(f"\n  ... 외 {comment_count - 5}개의 댓글 더 있음")
+        if new_title:
+            print(f"제안된 제목: {new_title}")
+        if new_desc:
+            print(f"제안된 설명: {new_desc}")
         
         print("="*80 + "\n")

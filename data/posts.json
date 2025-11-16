@@ -1,0 +1,228 @@
+[
+  {
+    "idx": 0,
+    "id": 49,
+    "title": "코드 리뷰는 어떻게 하시나요?",
+    "description": "동료의 코드를 검토하여 버그를 미리 발견하고, 코드의 품질 및 가독성을 높이며, 팀원 간 지식을 공유하는 협업 문화입니다.\\n단순한 오류 지적이 아닌, 성장과 학습을 위한 건설적인 피드백 교환에 초점을 맞춥니다.",
+    "category_id": 9
+  },
+  {
+    "idx": 1,
+    "id": 50,
+    "title": "커밋 컨벤션과 단위",
+    "description": "커밋 메시지를 일관된 형식(예: feat:, fix:)으로 작성하는 규칙입니다.\\n커밋 단위는 하나의 기능 또는 수정 사항만 포함하도록 작게 유지해야, 히스토리를 깔끔하게 관리하고 문제 발생 시 추적 및 되돌리기가 용이해집니다.",
+    "category_id": 9
+  },
+  {
+    "idx": 2,
+    "id": 51,
+    "title": "문서화 (README.md, MarkDown)",
+    "description": "프로젝트의 목적, 설치 방법, 사용법 등을 명확하게 기록하는 과정입니다.\\nMarkDown은 문서를 간결하고 보기 좋게 작성하기 위한 경량 마크업 언어로, 개발자들 사이의 표준 문서 형식입니다.",
+    "category_id": 9
+  },
+  {
+    "idx": 3,
+    "id": 52,
+    "title": "지속 가능한 협업",
+    "description": "팀이 장기간 동안 건강하고 효율적으로 일할 수 있도록 돕는 원칙과 문화입니다.\\n명확한 커뮤니케이션, 상호 존중, 투명한 정보 공유 등을 통해 팀의 생산성을 유지하는 것을 목표로 합니다.",
+    "category_id": 9
+  },
+  {
+    "idx": 4,
+    "id": 53,
+    "title": "프로젝트 동기 및 회복",
+    "description": "데일리스크럼은 매일 짧게 진행하는 회의로, 어제 한 일, 오늘 할 일, 장애물을 공유하며 팀의 동기 상태를 확인합니다.\\n리팩토링은 기능을 변경하지 않으면서 코드의 구조를 개선하여 시스템을 회복하고 유지보수성을 높이는 행위입니다.",
+    "category_id": 9
+  },
+  {
+    "idx": 5,
+    "id": 54,
+    "title": "아키텍처/패턴 기본",
+    "description": "시스템을 구조화하는 방식이며, 특히 MVC (Model-View-Controller) 패턴은 데이터를 다루는 Model, 사용자에게 보여주는 View, 그리고 이 둘을 연결하는 Controller로 역할을 분리하여 코드를 체계적으로 관리하는 기본 설계 패턴입니다.",
+    "category_id": 10
+  },
+  {
+    "idx": 6,
+    "id": 55,
+    "title": "설계와 문서화",
+    "description": "소프트웨어 개발 전 단계에서 요구사항을 정의하고, 데이터 구조(ERD), 기능 명세(API 명세서), 정보 흐름(IA) 등을 설계하는 과정입니다.\\n설계 문서는 협업의 기준점이 되며, 개발 방향을 일관성 있게 유지할 수 있도록 돕습니다.",
+    "category_id": 10
+  },
+  {
+    "idx": 7,
+    "id": 56,
+    "title": "클린 코드와 이름 짓기",
+    "description": "읽기 쉽고, 이해하기 쉬우며, 수정하기 쉬운 코드를 만드는 원칙입니다.\\n변수, 함수, 클래스 등의 이름을 의미가 명확하고 오해의 소지가 없도록 잘 짓는 것이 클린 코드의 첫걸음이자 가장 중요한 요소입니다.",
+    "category_id": 10
+  },
+  {
+    "idx": 8,
+    "id": 57,
+    "title": "리팩토링 (Refactoring)",
+    "description": "외부 동작은 그대로 유지한 채 내부 코드 구조만 개선하는 작업입니다.\\n코드를 더 깨끗하고 효율적으로 만들어 유지보수 비용을 줄이고, 새로운 기능을 추가하기 쉬운 상태로 만드는 데 필수적입니다.",
+    "category_id": 10
+  },
+  {
+    "idx": 9,
+    "id": 58,
+    "title": "TDD (테스트 주도 개발)",
+    "description": "테스트 코드를 먼저 작성하고, 이를 통과하는 최소한의 코드를 작성한 후, 리팩토링하는 개발 방법론입니다.\\n개발 과정에서 버그를 줄이고 설계의 품질을 높이는 데 강력한 효과가 있습니다.",
+    "category_id": 11
+  },
+  {
+    "idx": 10,
+    "id": 59,
+    "title": "테스트 코드 작성",
+    "description": "유닛 테스트는 코드의 가장 작은 단위(함수, 메서드 등)가 예상대로 동작하는지 검증하는 테스트입니다.\\nAAA (Arrange-Act-Assert)는 테스트 코드를 준비(Arrange), 실행(Act), 검증(Assert) 세 단계로 구성하는 표준적인 작성 방식입니다.",
+    "category_id": 11
+  },
+  {
+    "idx": 11,
+    "id": 60,
+    "title": "학습 및 성장 방법",
+    "description": "개발 지식을 습득하고 커리어를 발전시키는 방법입니다.\\n클론 코딩은 다른 프로젝트를 똑같이 만들어보며 기술을 익히는 방법이며, KPT 회고는 Keep (잘한 점), Problem (문제점), Try (시도할 점)을 정리하여 다음 스프린트의 목표를 설정하는 회고 방식입니다.",
+    "category_id": 12
+  },
+  {
+    "idx": 12,
+    "id": 61,
+    "title": "CS 지식",
+    "description": "Computer Science (컴퓨터 과학) 지식으로, 자료 구조, 알고리즘, 운영체제, 네트워크 등 개발의 근간이 되는 기초 학문입니다.\\n탄탄한 CS 지식은 복잡한 문제 해결 능력과 기술 이해도를 높여줍니다.",
+    "category_id": 12
+  },
+  {
+    "idx": 13,
+    "id": 62,
+    "title": "AI 및 도구 활용",
+    "description": "개발 효율성을 높이기 위해 AI(LLM/GPT) 및 도구(Docker, CodeRabbit)를 활용하는 방법입니다.\\nDocker는 애플리케이션을 격리된 컨테이너에 담아 환경에 관계없이 일관된 실행을 보장하는 도구입니다.",
+    "category_id": 12
+  },
+  {
+    "idx": 14,
+    "id": 63,
+    "title": "개발 환경 설정",
+    "description": "개발 작업에 최적화된 도구(IDE, 터미널 등)와 환경을 구성하는 것입니다.\\n예를 들어, IDE의 콘솔에서 발생하는 한글 깨짐 현상을 해결하는 것 등이 포함됩니다.",
+    "category_id": 12
+  },
+  {
+    "idx": 15,
+    "id": 64,
+    "title": "멘탈 관리",
+    "description": "멘탈관리가 안되시는 분들은... GPT한테 지금까지의 내 프롬프트를 기반으로 내 장점을 찾아서 칭찬해달라고 해보세요!",
+    "category_id": 12
+  },
+  {
+    "idx": 16,
+    "id": 65,
+    "title": "DDD와 계층 구조",
+    "description": "DDD (Domain-Driven Design, 도메인 주도 설계)는 비즈니스 로직(도메인)을 중심으로 소프트웨어를 설계하는 방식입니다.\\nController-Service 계층 구조는 외부 요청 처리(Controller), 비즈니스 로직 수행(Service), 데이터 관리(Repository/DAO)로 역할을 분리하는 가장 일반적인 백엔드 구조입니다.",
+    "category_id": 13
+  },
+  {
+    "idx": 17,
+    "id": 66,
+    "title": "코드 스타일 및 원칙",
+    "description": "가독성과 유지보수성을 극대화하기 위해 언어(예: Java)나 프레임워크(예: Spring)의 공식 표준에 따라 코드를 작성하는 규칙입니다.\\n일관된 스타일은 협업의 효율을 크게 높여줍니다.",
+    "category_id": 13
+  },
+  {
+    "idx": 18,
+    "id": 67,
+    "title": "Java 환경 (JDK)",
+    "description": "JDK (Java Development Kit)는 자바 프로그램 개발에 필요한 도구 모음입니다.\\nJVM (Java Virtual Machine)은 자바 코드를 실행하는 가상 머신이며, JRE (Java Runtime Environment)는 자바 프로그램을 실행하기 위한 환경입니다.",
+    "category_id": 14
+  },
+  {
+    "idx": 19,
+    "id": 68,
+    "title": "Java 기본 문법",
+    "description": "var 타입은 Java 10부터 도입된 지역 변수 타입 추론 키워드로, 코드를 간결하게 만듭니다.\\n안정적인 알고리즘 문제풀이를 통해 자바 언어의 활용 능력을 심화합니다.",
+    "category_id": 14
+  },
+  {
+    "idx": 20,
+    "id": 69,
+    "title": "Spring 기초 및 심화",
+    "description": "JPA (Java Persistence API)는 자바 객체와 데이터베이스를 매핑하여 데이터 관리를 돕는 기술이며, Hibernate는 JPA의 구현체 중 하나입니다.\\nSpring Security는 인증 및 인가 기능을 처리하여 애플리케이션 보안을 담당합니다.",
+    "category_id": 14
+  },
+  {
+    "idx": 21,
+    "id": 70,
+    "title": "동시성 및 토큰 관리",
+    "description": "동시성 제어는 여러 작업이 동시에 데이터를 접근할 때 데이터의 일관성을 유지하는 기술입니다.\\nRedis는 인메모리 데이터 저장소로, 빠른 데이터 처리 및 동시성 제어, 세션/토큰 관리 등에 사용됩니다.",
+    "category_id": 14
+  },
+  {
+    "idx": 22,
+    "id": 71,
+    "title": "CI/CD 및 인프라",
+    "description": "CI/CD (Continuous Integration/Continuous Delivery)는 코드 변경 사항을 자동으로 테스트하고 배포하는 프로세스입니다.\\nGithub Action은 CI/CD를 자동화하는 도구이며, AWS EC2는 클라우드에서 가상 서버(컴퓨터)를 구축하는 서비스입니다.",
+    "category_id": 15
+  },
+  {
+    "idx": 23,
+    "id": 72,
+    "title": "실시간 통신",
+    "description": "Web Socket은 서버와 클라이언트 간에 지속적인 양방향 통신 채널을 설정하는 프로토콜입니다.\\nSTOMP, Pub/Sub 등은 웹 소켓 위에서 메시지를 효율적으로 주고받기 위한 프로토콜 및 패턴입니다.",
+    "category_id": 15
+  },
+  {
+    "idx": 24,
+    "id": 73,
+    "title": "Java 성능",
+    "description": "Stream API는 대량의 데이터를 선언적이고 함수형 스타일로 처리하는 기능입니다.\\n원시타입(int)과 참조타입(Integer)의 메모리 사용 및 성능 차이를 이해하는 것은 Java 성능 최적화에 중요합니다.",
+    "category_id": 15
+  },
+  {
+    "idx": 25,
+    "id": 74,
+    "title": "깊은 학습 예시",
+    "description": "RealMySQL 인덱스는 데이터베이스 검색 성능을 높이기 위해 데이터의 위치 정보를 저장하는 구조입니다.\\n실제 자료를 통해 인덱스가 쿼리 성능에 미치는 영향을 깊이 있게 학습합니다.",
+    "category_id": 15
+  },
+  {
+    "idx": 26,
+    "id": 75,
+    "title": "React 폴더 구조",
+    "description": "컴포넌트를 Presentational (UI 표시)과 Container (로직 및 데이터 처리)로 분리하는 방식 등을 통해 재사용성과 유지보수성을 높이는 구조화 방식입니다.\\n체계적인 폴더 구조는 대규모 프로젝트 관리에 필수적입니다.",
+    "category_id": 16
+  },
+  {
+    "idx": 27,
+    "id": 76,
+    "title": "프론트엔드 MV 패턴",
+    "description": "MVVM (Model-View-ViewModel) 및 MVI (Model-View-Intent)는 컴포넌트 간의 책임 분리와 상태 관리를 체계화하는 설계 패턴입니다.\\n상태 변화를 예측 가능하게 만들어 복잡한 UI 개발을 단순화합니다.",
+    "category_id": 16
+  },
+  {
+    "idx": 28,
+    "id": 77,
+    "title": "정적 Asset 관리",
+    "description": "로고나 아이콘 같은 정적 파일(Asset)을 효율적으로 관리하는 방법입니다.\\nSVG Sprite는 여러 SVG를 하나의 파일로 합쳐 네트워크 요청을 줄이고 관리를 용이하게 합니다.",
+    "category_id": 17
+  },
+  {
+    "idx": 29,
+    "id": 78,
+    "title": "JavaScript/TypeScript",
+    "description": "클로저(Closure)는 함수와 함수가 선언된 어휘적 환경의 조합이며, 클래스(Class)는 객체 지향 프로그래밍의 핵심 요소입니다.\\n이 두 개념을 비교 학습하여 JS/TS의 동작 원리를 깊이 이해합니다.",
+    "category_id": 17
+  },
+  {
+    "idx": 30,
+    "id": 79,
+    "title": "Kotlin 문법 학습",
+    "description": "안드로이드 공식 언어인 Kotlin의 기본 문법 및 특징(널 안전성, 확장 함수 등)을 학습하여 간결하고 안전한 코드를 작성하는 능력을 기릅니다.",
+    "category_id": 19
+  },
+  {
+    "idx": 31,
+    "id": 80,
+    "title": "Kotlin 적용 사례",
+    "description": "실제 서비스(예: 카카오페이)에서 Kotlin을 어떻게 활용하고 있는지 구체적인 예시를 통해 학습하여, 이론을 실무에 적용하는 방법을 익힙니다.",
+    "category_id": 19
+  }
+]
+
+
