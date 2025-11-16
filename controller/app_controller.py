@@ -1,8 +1,10 @@
 from view.cli_view import CLIView
+from service.scraper_service import ScraperService
 
 class AppController:
     def __init__(self):
         self.view = CLIView()
+        self.scraper = ScraperService()
 
     def run(self):
         self.view.show_welcome()
@@ -10,5 +12,19 @@ class AppController:
         while True:
             choice = self.view.prompt_main_menu()
 
-            # if choice == "1":
-            #     data = self.
+            if choice == "1":
+                data = self.scraper.scrape()
+                self.view.show_message("스크래핑 완료!")
+
+            elif choice == "2":
+                # 카테고리 분류 기능 구현
+
+                self.view.show_message("카테고리 분류 완료!")
+
+            elif choice == "3":
+                # CSV 파일로 저장 기능 구현
+
+                self.view.show_message("CSV 파일 저장 완료!")
+
+            # elif choice == "0":
+
