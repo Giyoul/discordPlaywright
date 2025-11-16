@@ -16,3 +16,6 @@ class CLIView:
 
     def show_error(self, err):
         print(f"[ERROR] {err}")
+
+    def show_login_session_certificate(self):
+        print("로그인 세션을 확인하는 중... (브라우저 쿠키 사용)")
