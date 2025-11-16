@@ -54,8 +54,8 @@ class ScraperService:
                     try:
                         current_url = page.url
                         
-                        # URL이 변경되었고 스레드 URL인 경우
-                        if current_url != previous_url and '/threads/' in current_url:
+                        # URL이 변경되었고 스레드 URL인 경우 (/thread/ 또는 /threads/)
+                        if current_url != previous_url and ('/thread/' in current_url or '/threads/' in current_url):
                             # 이미 스크래핑한 URL인지 확인
                             if current_url not in self.scraped_urls:
                                 print(f"\n[INFO] 새로운 스레드 감지: {current_url}")
@@ -89,8 +89,8 @@ class ScraperService:
             traceback.print_exc()
             return []
 
+    # CLI에서 end 입력 기다림
     def _wait_for_end_command(self):
-        """CLI에서 'end' 명령을 기다립니다."""
         while not self.should_stop:
             try:
                 user_input = input().strip().lower()
@@ -100,34 +100,38 @@ class ScraperService:
                     break
             except (EOFError, KeyboardInterrupt):
                 break
-    
+
+    # 스레드 URL을 전체보기 URL로 변환합니다.
+    # 원본 URL 형식: /{guild_id}/{channel_id}/threads/{thread_id}
+    # 전체 URL 형식: /{guild_id}/{thread_id}
     def _convert_thread_url_to_full_view(self, thread_url):
-        """스레드 URL을 전체보기 URL로 변환합니다.
-        
-        예: /channels/{guild_id}/{channel_id}/thread/{thread_id}
-        -> /channels/{guild_id}/{thread_id}
-        """
+
         try:
-            if '/thread/' in thread_url:
+            if '/thread' in thread_url:
                 # URL 파싱
                 parts = thread_url.split('/channels/')
                 if len(parts) > 1:
                     channel_part = parts[1]
-                    # /{guild_id}/{channel_id}/thread/{thread_id} 형식
                     segments = channel_part.split('/')
-                    if len(segments) >= 4 and segments[2] == 'thread':
+
+                    if len(segments) >= 4 and (segments[2] == 'thread' or segments[2] == 'threads'):
                         guild_id = segments[0]
                         thread_id = segments[3]
-                        # 전체보기 URL 생성
                         full_view_url = f"https://discord.com/channels/{guild_id}/{thread_id}"
                         return full_view_url
+                    else:
+                        print(f"[WARNING] URL 형식이 예상과 다릅니다. segments[2]={segments[2] if len(segments) > 2 else 'N/A'}")
+
+            print(f"[WARNING] URL 변환 실패, 원본 URL 반환: {thread_url}")
             return thread_url
         except Exception as e:
-            print(f"[WARNING] URL 변환 실패: {e}")
+            print(f"[WARNING] URL 변환 중 오류 발생: {e}")
+            import traceback
+            traceback.print_exc()
             return thread_url
-    
+
+    # 스크롤 내려서 모든 데이터 가져오기
     def _scroll_to_load_all_comments(self, page):
-        """스크롤을 내려서 모든 댓글을 로드합니다."""
         print("[INFO] 모든 댓글을 로드하기 위해 스크롤 중...")
         
         last_height = 0
@@ -153,9 +157,9 @@ class ScraperService:
             last_height = current_height
         
         print(f"[INFO] 스크롤 완료. (시도 횟수: {scroll_attempts})")
-    
+
+    # 페이지에서 글 내용과 댓글 스크래핑
     def _scrape_thread(self, page, thread_url):
-        """스레드 페이지에서 글과 댓글을 스크래핑합니다."""
         try:
             # 스레드 URL을 전체보기 URL로 변환
             full_view_url = self._convert_thread_url_to_full_view(thread_url)
@@ -174,9 +178,7 @@ class ScraperService:
             
             # 모든 댓글을 로드하기 위해 스크롤
             self._scroll_to_load_all_comments(page)
-            
-            # 메시지 요소 찾기 (더 구체적인 선택자 사용)
-            # 전체보기 페이지에서는 메인 메시지 영역만 선택
+
             messages = []
             
             # 여러 선택자 시도
@@ -192,7 +194,6 @@ class ScraperService:
                     elements = page.query_selector_all(selector)
                     if elements:
                         messages = elements
-                        print(f"[DEBUG] {selector} 선택자로 {len(elements)}개 메시지 발견")
                         break
                 except Exception:
                     continue
@@ -207,23 +208,18 @@ class ScraperService:
             original_msg = messages[0]
             original_content = self._extract_message_content(original_msg)
             original_author = self._extract_author(original_msg)
-            original_timestamp = self._extract_timestamp(original_msg)
-            
-            print(f"[DEBUG] 원본 글 - 작성자: {original_author}, 내용 길이: {len(original_content)}")
-            
+
             # 댓글들 (나머지 메시지들)
             comments = []
             for idx, msg in enumerate(messages[1:], 1):
                 comment_content = self._extract_message_content(msg)
                 comment_author = self._extract_author(msg)
-                comment_timestamp = self._extract_timestamp(msg)
-                
+
                 # 빈 내용이 아니고, 원본 글과 다른 경우만 댓글로 추가
                 if comment_content.strip() and comment_content != original_content:
                     comments.append({
                         'content': comment_content,
                         'author': comment_author,
-                        'timestamp': comment_timestamp
                     })
             
             print(f"[INFO] 댓글 {len(comments)}개 추출 완료")
@@ -234,7 +230,6 @@ class ScraperService:
                 'original_post': {
                     'content': original_content,
                     'author': original_author,
-                    'timestamp': original_timestamp
                 },
                 'comments': comments,
                 'comment_count': len(comments)
@@ -286,19 +281,9 @@ class ScraperService:
             return "Unknown"
         except Exception:
             return "Unknown"
-    
-    def _extract_timestamp(self, msg_element):
-        """메시지 요소에서 타임스탬프를 추출합니다."""
-        try:
-            time_elem = msg_element.query_selector('time, [class*="timestamp"]')
-            if time_elem:
-                return time_elem.get_attribute('datetime')
-            return None
-        except Exception:
-            return None
-    
+
+    # CLI에 스크랩된 데이터 출력
     def _print_thread_data(self, thread_data):
-        """스레드 데이터를 보기 좋게 출력합니다."""
         print("\n" + "="*80)
         print("스크래핑 결과")
         print("="*80)
@@ -311,7 +296,6 @@ class ScraperService:
         original = thread_data.get('original_post', {})
         print(f"\n[원본 글]")
         print(f"  작성자: {original.get('author', 'Unknown')}")
-        print(f"  시간: {original.get('timestamp', 'N/A')}")
         print(f"  내용:")
         content = original.get('content', '')
         if content:
@@ -330,7 +314,6 @@ class ScraperService:
         for i, comment in enumerate(comments[:5], 1):
             print(f"\n  댓글 #{i}:")
             print(f"    작성자: {comment.get('author', 'Unknown')}")
-            print(f"    시간: {comment.get('timestamp', 'N/A')}")
             comment_content = comment.get('content', '')
             if comment_content:
                 for line in comment_content.split('\n')[:3]:
