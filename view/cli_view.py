@@ -6,8 +6,7 @@ class CLIView:
     def prompt_main_menu(self):
         print("\n메뉴 선택:")
         print("1. 디스코드 글/ 댓글 스크래핑")
-        print("2. 카테고리 분류")
-        print("3. CSV 저장")
+        print("2. CSV 저장")
         print("0. 종료")
         return input("> ")
 

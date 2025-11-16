@@ -101,6 +101,10 @@ class ScraperService:
             import traceback
             traceback.print_exc()
             return []
+    
+    def get_cached_posts(self):
+        """스크래핑된 posts를 반환합니다."""
+        return self.cached_posts
 
     # CLI에서 end 입력 기다림
     def _wait_for_end_command(self):
@@ -237,10 +241,13 @@ class ScraperService:
             
             print(f"[INFO] 댓글 {len(comments)}개 추출 완료")
             
-            # title 추출 시도 (원본 글의 첫 부분을 title로 사용)
-            title = original_content[:50] if len(original_content) > 50 else original_content
-            if not title.strip():
-                title = "제목 없음"
+            # Discord 스레드 제목 추출 시도
+            title = self._extract_thread_title(page)
+            if not title or not title.strip():
+                # 제목을 찾을 수 없으면 원본 글의 첫 부분을 title로 사용
+                title = original_content[:50] if len(original_content) > 50 else original_content
+                if not title.strip():
+                    title = "제목 없음"
             
             return {
                 'title': title,
@@ -301,6 +308,44 @@ class ScraperService:
             return "Unknown"
         except Exception:
             return "Unknown"
+    
+    def _extract_thread_title(self, page):
+        """Discord 스레드 제목을 추출합니다."""
+        try:
+            # Discord 스레드 제목을 찾기 위한 다양한 선택자 시도
+            title_selectors = [
+                'h1[class*="title"]',
+                'div[class*="title"]',
+                '[class*="threadTitle"]',
+                '[class*="thread-title"]',
+                'h1',
+                '[aria-label*="thread"]',
+                '[data-list-id*="thread"] h1',
+                '[class*="header"] h1',
+                '[class*="header"] [class*="title"]'
+            ]
+            
+            for selector in title_selectors:
+                try:
+                    title_elem = page.query_selector(selector)
+                    if title_elem:
+                        title_text = title_elem.inner_text().strip()
+                        if title_text and len(title_text) > 0:
+                            return title_text
+                except Exception:
+                    continue
+            
+            # 페이지 제목에서 추출 시도
+            try:
+                page_title = page.title()
+                if page_title and 'Discord' not in page_title:
+                    return page_title
+            except Exception:
+                pass
+            
+            return None
+        except Exception:
+            return None
 
     def _classify_thread(self, thread_data):
         """스크래핑된 스레드 데이터를 AI로 분류합니다."""

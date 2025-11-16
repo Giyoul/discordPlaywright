@@ -1,10 +1,12 @@
 from view.cli_view import CLIView
 from service.scraper_service import ScraperService
+from service.save_service import SaveService
 
 class AppController:
     def __init__(self):
         self.view = CLIView()
         self.scraper = ScraperService()
+        self.save_service = SaveService(self.scraper, self.view)
 
 
 
@@ -19,9 +21,7 @@ class AppController:
                 self.view.show_message("스크래핑 완료!")
 
             elif choice == "2":
-                # CSV 파일로 저장 기능 구현
-
-                self.view.show_message("CSV 파일 저장 완료!")
+                self.save_service.save_to_csv()
 
             elif choice == "0":
                 self.view.show_message("종료합니다!")
@@ -29,3 +29,4 @@ class AppController:
 
             else:
                 self.view.show_error("잘못된 입력입니다!")
+    
