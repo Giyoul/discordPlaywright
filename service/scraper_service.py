@@ -1,19 +1,24 @@
 import config
+import threading
 from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeoutError
 
 class ScraperService:
     def __init__(self):
         self.cached_posts = []
+        self.scraped_urls = set()  # 이미 스크래핑한 URL 추적
+        self.should_stop = False  # 종료 플래그
 
     def scrape(self):
         url = config.CHANNEL_URL
 
         print("스크래핑 시작...")
         print(f"[INFO] 스크래핑 URL: {url}")
+        print("[INFO] 브라우저에서 원하는 글을 클릭하면 자동으로 스크래핑됩니다.")
+        print("[INFO] CLI에서 'end'를 입력하면 스크래핑을 종료합니다.\n")
 
         try:
             with sync_playwright() as p:
-                # 브라우저 실행 (headless=False로 하면 브라우저가 보임)
+                # 브라우저 실행
                 browser = p.chromium.launch(headless=False)
                 
                 # 브라우저 컨텍스트 생성
@@ -27,80 +32,56 @@ class ScraperService:
                 print("페이지 로딩 중...")
                 page.goto(url, wait_until='networkidle', timeout=30000)
                 
-                # 채널 페이지가 완전히 로드되고 메시지가 나타날 때까지 대기
-                print("\n[INFO] 채널 페이지 및 메시지 로딩 대기 중...")
+                # 메시지 로드 대기
+                print("\n[INFO] 채널 페이지 로딩 대기 중...")
                 try:
-                    # 메시지 컨테이너가 나타날 때까지 대기 (최대 30초)
                     page.wait_for_selector('li[class*="message"], div[class*="message"]', timeout=30000)
-                    print("[INFO] 메시지 로드 완료!")
+                    print("[INFO] 페이지 로드 완료!")
                 except PlaywrightTimeoutError:
-                    print("[WARNING] 메시지 요소를 찾을 수 없습니다. 페이지가 완전히 로드되지 않았을 수 있습니다.")
-                    print("[INFO] 계속 진행합니다...")
+                    print("[WARNING] 메시지 요소를 찾을 수 없습니다.")
                 
-                # 페이지 내용 가져오기
-                print("메시지 스크래핑 중...")
-                posts = []
+                # CLI 입력을 받는 스레드 시작
+                input_thread = threading.Thread(target=self._wait_for_end_command, daemon=True)
+                input_thread.start()
                 
-                # 디스코드 메시지 선택자들 시도
-                selectors = [
-                    'li[class*="message"]',
-                    'div[class*="message"]',
-                    '[class*="messageContainer"]',
-                    '[class*="messageContent"]'
-                ]
+                # 이전 URL 추적
+                previous_url = page.url
                 
-                messages = []
-                for selector in selectors:
+                print("\n[INFO] 브라우저에서 글을 클릭하세요. 'end'를 입력하면 종료됩니다.\n")
+                
+                # URL 변경 감지 루프
+                while not self.should_stop:
                     try:
-                        elements = page.query_selector_all(selector)
-                        if elements:
-                            messages = elements
-                            print(f"[DEBUG] {selector} 선택자로 {len(elements)}개 요소 발견")
-                            break
+                        current_url = page.url
+                        
+                        # URL이 변경되었고 스레드 URL인 경우
+                        if current_url != previous_url and '/threads/' in current_url:
+                            # 이미 스크래핑한 URL인지 확인
+                            if current_url not in self.scraped_urls:
+                                print(f"\n[INFO] 새로운 스레드 감지: {current_url}")
+                                thread_data = self._scrape_thread(page, current_url)
+                                if thread_data:
+                                    self.cached_posts.append(thread_data)
+                                    self.scraped_urls.add(current_url)
+                                    print(f"[INFO] 스크래핑 완료! (총 {len(self.cached_posts)}개)")
+                                    # 스크래핑 결과 출력
+                                    self._print_thread_data(thread_data)
+                            else:
+                                print(f"\n[INFO] 이미 스크래핑한 글입니다: {current_url}")
+                            
+                            previous_url = current_url
+                        
+                        # 짧은 대기 시간
+                        page.wait_for_timeout(500)
+                        
                     except Exception as e:
-                        continue
-                
-                if not messages:
-                    # 대체 방법: 모든 텍스트가 있는 요소 찾기
-                    print("[INFO] 메시지 선택자를 찾지 못했습니다. 페이지 구조를 확인합니다...")
-                    # 페이지의 텍스트 내용 일부 출력 (디버깅용)
-                    page_content = page.content()
-                    print(f"[DEBUG] 페이지 HTML 길이: {len(page_content)}")
-                
-                # 메시지 파싱
-                for i, msg_element in enumerate(messages[:50]):  # 최대 50개만 가져오기
-                    try:
-                        # 메시지 내용 추출
-                        content_elem = msg_element.query_selector('[class*="messageContent"], [class*="content"]')
-                        if not content_elem:
-                            content_elem = msg_element
-                        
-                        content = content_elem.inner_text() if content_elem else msg_element.inner_text()
-                        
-                        # 사용자 이름 추출
-                        username_elem = msg_element.query_selector('[class*="username"], [class*="author"], [class*="name"]')
-                        username = username_elem.inner_text() if username_elem else "Unknown"
-                        
-                        # 시간 추출
-                        time_elem = msg_element.query_selector('time, [class*="timestamp"]')
-                        timestamp = time_elem.get_attribute('datetime') if time_elem else None
-                        
-                        if content.strip():  # 내용이 있는 경우만 추가
-                            posts.append({
-                                'title': content[:50] if len(content) > 50 else content,
-                                'content': content,
-                                'author': username,
-                                'timestamp': timestamp,
-                                'link': url
-                            })
-                    except Exception as e:
-                        print(f"[WARNING] 메시지 {i+1} 파싱 중 오류: {e}")
-                        continue
+                        print(f"[ERROR] 오류 발생: {e}")
+                        page.wait_for_timeout(1000)
                 
                 browser.close()
+                print(f"\n[INFO] 스크래핑 종료. 총 {len(self.cached_posts)}개의 스레드를 스크래핑했습니다.")
                 
-                print(f"[INFO] {len(posts)}개의 메시지를 스크래핑했습니다.")
-                return posts
+                return self.cached_posts
                 
         except Exception as e:
             print(f"[ERROR] 스크래핑 중 오류 발생: {e}")
@@ -108,3 +89,258 @@ class ScraperService:
             traceback.print_exc()
             return []
 
+    def _wait_for_end_command(self):
+        """CLI에서 'end' 명령을 기다립니다."""
+        while not self.should_stop:
+            try:
+                user_input = input().strip().lower()
+                if user_input == 'end':
+                    print("\n[INFO] 종료 명령을 받았습니다. 스크래핑을 종료합니다...")
+                    self.should_stop = True
+                    break
+            except (EOFError, KeyboardInterrupt):
+                break
+    
+    def _convert_thread_url_to_full_view(self, thread_url):
+        """스레드 URL을 전체보기 URL로 변환합니다.
+        
+        예: /channels/{guild_id}/{channel_id}/thread/{thread_id}
+        -> /channels/{guild_id}/{thread_id}
+        """
+        try:
+            if '/thread/' in thread_url:
+                # URL 파싱
+                parts = thread_url.split('/channels/')
+                if len(parts) > 1:
+                    channel_part = parts[1]
+                    # /{guild_id}/{channel_id}/thread/{thread_id} 형식
+                    segments = channel_part.split('/')
+                    if len(segments) >= 4 and segments[2] == 'thread':
+                        guild_id = segments[0]
+                        thread_id = segments[3]
+                        # 전체보기 URL 생성
+                        full_view_url = f"https://discord.com/channels/{guild_id}/{thread_id}"
+                        return full_view_url
+            return thread_url
+        except Exception as e:
+            print(f"[WARNING] URL 변환 실패: {e}")
+            return thread_url
+    
+    def _scroll_to_load_all_comments(self, page):
+        """스크롤을 내려서 모든 댓글을 로드합니다."""
+        print("[INFO] 모든 댓글을 로드하기 위해 스크롤 중...")
+        
+        last_height = 0
+        scroll_attempts = 0
+        max_scroll_attempts = 20  # 최대 스크롤 시도 횟수
+        
+        while scroll_attempts < max_scroll_attempts:
+            # 페이지 끝까지 스크롤
+            page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
+            page.wait_for_timeout(1500)  # 새 콘텐츠 로드 대기
+            
+            # 현재 높이 확인
+            current_height = page.evaluate("document.body.scrollHeight")
+            
+            # 높이가 변하지 않으면 더 이상 로드할 내용이 없음
+            if current_height == last_height:
+                scroll_attempts += 1
+                if scroll_attempts >= 3:  # 3번 연속 높이가 같으면 종료
+                    break
+            else:
+                scroll_attempts = 0
+            
+            last_height = current_height
+        
+        print(f"[INFO] 스크롤 완료. (시도 횟수: {scroll_attempts})")
+    
+    def _scrape_thread(self, page, thread_url):
+        """스레드 페이지에서 글과 댓글을 스크래핑합니다."""
+        try:
+            # 스레드 URL을 전체보기 URL로 변환
+            full_view_url = self._convert_thread_url_to_full_view(thread_url)
+            print(f"[INFO] 전체보기 URL로 이동: {full_view_url}")
+            
+            # 전체보기 페이지로 이동
+            page.goto(full_view_url, wait_until='networkidle', timeout=30000)
+            page.wait_for_timeout(2000)
+            
+            # 메시지 로드 대기
+            try:
+                page.wait_for_selector('li[class*="message"], div[class*="message"]', timeout=10000)
+            except PlaywrightTimeoutError:
+                print(f"[WARNING] 메시지 요소를 찾을 수 없습니다.")
+                return None
+            
+            # 모든 댓글을 로드하기 위해 스크롤
+            self._scroll_to_load_all_comments(page)
+            
+            # 메시지 요소 찾기 (더 구체적인 선택자 사용)
+            # 전체보기 페이지에서는 메인 메시지 영역만 선택
+            messages = []
+            
+            # 여러 선택자 시도
+            selectors = [
+                'article[class*="message"]',
+                'div[class*="messageGroup"]',
+                'li[class*="message"]',
+                'div[class*="message"]'
+            ]
+            
+            for selector in selectors:
+                try:
+                    elements = page.query_selector_all(selector)
+                    if elements:
+                        messages = elements
+                        print(f"[DEBUG] {selector} 선택자로 {len(elements)}개 메시지 발견")
+                        break
+                except Exception:
+                    continue
+            
+            if not messages:
+                print("[WARNING] 메시지를 찾을 수 없습니다.")
+                return None
+            
+            print(f"[INFO] 총 {len(messages)}개의 메시지 발견")
+            
+            # 원본 글 찾기 (첫 번째 메시지 또는 특정 메시지)
+            original_msg = messages[0]
+            original_content = self._extract_message_content(original_msg)
+            original_author = self._extract_author(original_msg)
+            original_timestamp = self._extract_timestamp(original_msg)
+            
+            print(f"[DEBUG] 원본 글 - 작성자: {original_author}, 내용 길이: {len(original_content)}")
+            
+            # 댓글들 (나머지 메시지들)
+            comments = []
+            for idx, msg in enumerate(messages[1:], 1):
+                comment_content = self._extract_message_content(msg)
+                comment_author = self._extract_author(msg)
+                comment_timestamp = self._extract_timestamp(msg)
+                
+                # 빈 내용이 아니고, 원본 글과 다른 경우만 댓글로 추가
+                if comment_content.strip() and comment_content != original_content:
+                    comments.append({
+                        'content': comment_content,
+                        'author': comment_author,
+                        'timestamp': comment_timestamp
+                    })
+            
+            print(f"[INFO] 댓글 {len(comments)}개 추출 완료")
+            
+            return {
+                'thread_link': thread_url,
+                'full_view_link': full_view_url,
+                'original_post': {
+                    'content': original_content,
+                    'author': original_author,
+                    'timestamp': original_timestamp
+                },
+                'comments': comments,
+                'comment_count': len(comments)
+            }
+            
+        except Exception as e:
+            print(f"[ERROR] 스레드 스크래핑 중 오류: {e}")
+            import traceback
+            traceback.print_exc()
+            return None
+    
+    def _extract_message_content(self, msg_element):
+        """메시지 요소에서 내용을 추출합니다."""
+        try:
+            # 더 구체적인 선택자들 시도
+            content_selectors = [
+                '[class*="messageContent"]',
+                '[class*="content"]',
+                '[class*="textContainer"]',
+                '[class*="markup"]',
+                'div[class*="message"]'
+            ]
+            
+            for selector in content_selectors:
+                try:
+                    content_elem = msg_element.query_selector(selector)
+                    if content_elem:
+                        text = content_elem.inner_text()
+                        if text.strip():
+                            return text
+                except Exception:
+                    continue
+            
+            # 모든 선택자가 실패하면 전체 텍스트에서 추출
+            full_text = msg_element.inner_text()
+            # 너무 긴 경우 (다른 메시지 포함 가능) 첫 부분만 반환
+            if len(full_text) > 1000:
+                return full_text[:1000]
+            return full_text
+        except Exception:
+            return ""
+    
+    def _extract_author(self, msg_element):
+        """메시지 요소에서 작성자를 추출합니다."""
+        try:
+            author_elem = msg_element.query_selector('[class*="username"], [class*="author"], [class*="name"]')
+            if author_elem:
+                return author_elem.inner_text()
+            return "Unknown"
+        except Exception:
+            return "Unknown"
+    
+    def _extract_timestamp(self, msg_element):
+        """메시지 요소에서 타임스탬프를 추출합니다."""
+        try:
+            time_elem = msg_element.query_selector('time, [class*="timestamp"]')
+            if time_elem:
+                return time_elem.get_attribute('datetime')
+            return None
+        except Exception:
+            return None
+    
+    def _print_thread_data(self, thread_data):
+        """스레드 데이터를 보기 좋게 출력합니다."""
+        print("\n" + "="*80)
+        print("스크래핑 결과")
+        print("="*80)
+        
+        print(f"\n[스레드 링크] {thread_data.get('thread_link', 'N/A')}")
+        if 'full_view_link' in thread_data:
+            print(f"[전체보기 링크] {thread_data.get('full_view_link', 'N/A')}")
+        
+        # 원본 글
+        original = thread_data.get('original_post', {})
+        print(f"\n[원본 글]")
+        print(f"  작성자: {original.get('author', 'Unknown')}")
+        print(f"  시간: {original.get('timestamp', 'N/A')}")
+        print(f"  내용:")
+        content = original.get('content', '')
+        if content:
+            for line in content.split('\n')[:10]:
+                print(f"    {line}")
+            if len(content.split('\n')) > 10:
+                print(f"    ... (총 {len(content.split('\n'))}줄)")
+        else:
+            print(f"    (내용 없음)")
+        
+        # 댓글들
+        comments = thread_data.get('comments', [])
+        comment_count = thread_data.get('comment_count', 0)
+        print(f"\n[댓글] 총 {comment_count}개")
+        
+        for i, comment in enumerate(comments[:5], 1):
+            print(f"\n  댓글 #{i}:")
+            print(f"    작성자: {comment.get('author', 'Unknown')}")
+            print(f"    시간: {comment.get('timestamp', 'N/A')}")
+            comment_content = comment.get('content', '')
+            if comment_content:
+                for line in comment_content.split('\n')[:3]:
+                    print(f"    {line}")
+                if len(comment_content.split('\n')) > 3:
+                    print(f"    ...")
+            else:
+                print(f"    (내용 없음)")
+        
+        if comment_count > 5:
+            print(f"\n  ... 외 {comment_count - 5}개의 댓글 더 있음")
+        
+        print("="*80 + "\n")

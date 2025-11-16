@@ -35,9 +35,5 @@ class AppController:
             else:
                 self.view.show_error("잘못된 입력입니다!")
 
-    def certificate(self):
-        self.view.show_login_session_certificate()
-        self.scraper.auth.load_browser_cookies()
-
     # def
     # 여기 반복문 객체화
