@@ -2,22 +2,32 @@ import browser_cookie3
 
 class AuthService:
     def __init__(self):
-        self.cookies = None
+        self.cookie_dict = None
 
     def load_browser_cookies(self):
         try:
             print("브라우저 쿠키 불러오는 중...")
-            self.cookies = browser_cookie3.Chrome()
+            # browser_cookie3.chrome()은 쿠키 제너레이터를 반환합니다
+            cookies = browser_cookie3.chrome(domain_name="discord.com")
+            # 제너레이터를 딕셔너리로 변환하여 저장
+            self.cookie_dict = {}
+            for cookie in cookies:
+                self.cookie_dict[cookie.name] = cookie.value
             print("쿠키 불러오기 성공!")
         except Exception as e:
             print("쿠키 로드 실패:", e)
+            self.cookie_dict = None
 
     def get_cookies(self):
-        if self.cookies is None:
+        if self.cookie_dict is None:
             self.load_browser_cookies()
-        # browser_cookie3 객체를 딕셔너리로 변환
-        cookie_dict = {}
-        if self.cookies:
-            for cookie in self.cookies:
-                cookie_dict[cookie.name] = cookie.value
-        return cookie_dict
+        
+        if self.cookie_dict is None:
+            self.cookie_dict = {}
+        
+        # print(f"[DEBUG] 로드된 쿠키 개수: {len(self.cookie_dict)}")
+        # if self.cookie_dict:
+        #     print(f"[DEBUG] 쿠키 키 샘플: {list(self.cookie_dict.keys())[:5]}")
+        # else:
+        #     print("[DEBUG] 쿠키가 비어있습니다!")
+        return self.cookie_dict
