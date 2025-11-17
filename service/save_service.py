@@ -21,8 +21,9 @@ class SaveService:
                 # 디버깅: 저장 전 데이터 확인
                 title_value = post.get('title', '')
                 description_value = post.get('description', '')
-                print(f"[DEBUG] 저장할 데이터 - title: {title_value[:50]}, description: {description_value[:50]}")
-                
+                post.get('')
+                print(f"[INFO] 저장할 데이터 - title: {title_value[:50]}, description: {description_value[:50], }")
+
                 row = {
                     'title': title_value,
                     'description': description_value,
