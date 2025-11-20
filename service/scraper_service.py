@@ -155,40 +155,6 @@ class ScraperService:
         print(f"  - 성공: {classified_count}개")
         print(f"  - 실패: {failed_count}개")
         print(f"  - 총 분류된 posts: {len(self.cached_posts)}개")
-    
-    def show_scraped_data_summary(self):
-        """스크래핑된 데이터를 약식으로 출력합니다."""
-        print("\n" + "="*80)
-        print("스크래핑된 데이터 요약")
-        print("="*80)
-        
-        # 분류된 데이터
-        print(f"\n[분류된 데이터] 총 {len(self.cached_posts)}개")
-        if self.cached_posts:
-            for idx, post in enumerate(self.cached_posts, 1):
-                title = post.get('title', 'N/A')[:50]
-                description = post.get('description', 'N/A')[:30]
-                post_id = post.get('post_id', 'null')
-                print(f"\n  {idx}. {title}")
-                print(f"     설명: {description}")
-                print(f"     Post ID: {post_id}")
-        else:
-            print("  (없음)")
-        
-        # 원본 데이터 (분류되지 않은)
-        print(f"\n[원본 데이터 (미분류)] 총 {len(self.raw_scraped_data)}개")
-        if self.raw_scraped_data:
-            for idx, data in enumerate(self.raw_scraped_data, 1):
-                title = data.get('title', 'N/A')[:50]
-                author = data.get('author', 'N/A')
-                comment_count = data.get('comment_count', 0)
-                print(f"\n  {idx}. {title}")
-                print(f"     작성자: {author}")
-                print(f"     댓글 수: {comment_count}개")
-        else:
-            print("  (없음)")
-        
-        print("\n" + "="*80)
 
     # CLI에서 end 입력 기다림
     def _wait_for_end_command(self):
@@ -396,6 +362,16 @@ class ScraperService:
     def _extract_thread_title(self, page):
         """Discord 스레드 제목을 추출합니다."""
         try:
+            # h3 #5 (인덱스 4)를 우선적으로 확인
+            try:
+                h3_elements = page.query_selector_all('h3')
+                if len(h3_elements) > 4:
+                    h3_title = h3_elements[5].inner_text().strip()
+                    if h3_title and len(h3_title) > 0:
+                        return h3_title
+            except Exception:
+                pass
+            
             # Discord 스레드 제목을 찾기 위한 다양한 선택자 시도
             title_selectors = [
                 'h1[class*="title"]',
